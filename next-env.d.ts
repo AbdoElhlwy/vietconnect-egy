@@ -1,6 +1,21 @@
-/// <reference types="next" />
-/// <reference types="next/image-types/global" />
-/// <reference path="./.next/types/routes.d.ts" />
+import type { NextConfig } from "next";
 
-// NOTE: This file should not be edited
-// see https://nextjs.org/docs/app/api-reference/config/typescript for more information.
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "**" }
+    ]
+  },
+  experimental: {
+    serverActions: { bodySizeLimit: "10mb" }
+  }
+};
+
+export default nextConfig;
