@@ -10,6 +10,8 @@ import { AssistantWidget } from "@/components/AssistantWidget";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const cairo = Cairo({ subsets: ["arabic", "latin"], variable: "--font-cairo", display: "swap" });
 
+export const dynamic = "force-dynamic";
+
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
