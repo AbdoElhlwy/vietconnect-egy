@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-inter: "Inter", sans-serif;
+  --font-cairo: "Cairo", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-diplomatic-fog text-diplomatic-navy antialiased;
+}
+
+[dir="rtl"] body {
+  font-family: var(--font-cairo);
+}
+
+.container-page {
+  @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+.section-title {
+  @apply text-2xl sm:text-3xl font-bold text-diplomatic-navy mb-2;
+}
+
+.card-diplomatic {
+  @apply rounded-2xl bg-white shadow-diplomatic border border-diplomatic-slate/10 p-6;
+}
+
+.badge-demo {
+  @apply inline-block rounded-full bg-vn-gold/20 text-diplomatic-navy text-xs font-semibold px-3 py-1;
+}

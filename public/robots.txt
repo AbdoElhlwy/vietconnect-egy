@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vietconnect-egy.example.com/sitemap.xml

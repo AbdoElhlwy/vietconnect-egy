@@ -1,0 +1,61 @@
+{
+  "brand": {
+    "name": "VietConnect Egy",
+    "tagline": "Cầu nối kỹ thuật số giữa Việt Nam và Ai Cập"
+  },
+  "nav": {
+    "home": "Trang chủ",
+    "about": "Giới thiệu",
+    "services": "Dịch vụ",
+    "students": "Sinh viên",
+    "citizens": "Công dân",
+    "business": "Kinh doanh",
+    "investment": "Đầu tư",
+    "directory": "Danh bạ",
+    "news": "Tin tức",
+    "emergency": "Khẩn cấp",
+    "proposal": "Đề xuất chiến lược",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "dashboard": "Bảng điều khiển"
+  },
+  "home": {
+    "heroTitle": "Cầu nối kỹ thuật số giữa Việt Nam, Ai Cập và Alexandria",
+    "heroSubtitle": "Nền tảng kỹ thuật số tích hợp hỗ trợ công dân, sinh viên, doanh nhân và nhà đầu tư Việt Nam tại Ai Cập",
+    "ctaExplore": "Khám phá dịch vụ",
+    "ctaStart": "Bắt đầu ngay",
+    "whyAlexTitle": "Tại sao chọn Alexandria?",
+    "servicesTitle": "Dịch vụ của chúng tôi",
+    "statsTitle": "Nền tảng qua các con số",
+    "partnersTitle": "Đối tác của chúng tôi",
+    "newsTitle": "Tin tức & Sự kiện mới nhất",
+    "demoDataLabel": "Dữ liệu demo"
+  },
+  "footer": {
+    "disclaimer": "VietConnect Egy là một đề xuất hợp tác kỹ thuật số độc lập và không phải là nền tảng chính thức của chính phủ hoặc lãnh sự quán trừ khi được cơ quan có thẩm quyền chính thức phê duyệt.",
+    "rights": "Đã đăng ký bản quyền",
+    "terms": "Điều khoản",
+    "privacy": "Quyền riêng tư",
+    "cookies": "Chính sách Cookie",
+    "accessibility": "Khả năng truy cập"
+  },
+  "auth": {
+    "loginTitle": "Đăng nhập",
+    "registerTitle": "Tạo tài khoản mới",
+    "email": "Email",
+    "password": "Mật khẩu",
+    "fullName": "Họ và tên",
+    "accountType": "Loại tài khoản",
+    "submit": "Tiếp tục",
+    "demoNotice": "Đây là tài khoản demo — mật khẩu phải được thay đổi trước khi sử dụng thực tế."
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Đã xảy ra lỗi",
+    "empty": "Không có dữ liệu để hiển thị",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "submit": "Gửi",
+    "search": "Tìm kiếm"
+  }
+}

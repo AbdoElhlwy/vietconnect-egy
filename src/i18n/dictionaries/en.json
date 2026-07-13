@@ -1,0 +1,61 @@
+{
+  "brand": {
+    "name": "VietConnect Egy",
+    "tagline": "The Digital Bridge Between Vietnam and Egypt"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "services": "Services",
+    "students": "Students",
+    "citizens": "Citizens",
+    "business": "Business",
+    "investment": "Investment",
+    "directory": "Directory",
+    "news": "News",
+    "emergency": "Emergency",
+    "proposal": "Strategic Proposal",
+    "login": "Login",
+    "register": "Register",
+    "dashboard": "Dashboard"
+  },
+  "home": {
+    "heroTitle": "The Digital Bridge Between Vietnam, Egypt and Alexandria",
+    "heroSubtitle": "An integrated digital platform supporting Vietnamese citizens, students, businesspeople and investors in Egypt",
+    "ctaExplore": "Explore Services",
+    "ctaStart": "Get Started",
+    "whyAlexTitle": "Why Alexandria?",
+    "servicesTitle": "Our Services",
+    "statsTitle": "Platform at a Glance",
+    "partnersTitle": "Our Partners",
+    "newsTitle": "Latest News & Events",
+    "demoDataLabel": "Demo Data"
+  },
+  "footer": {
+    "disclaimer": "VietConnect Egy is an independent digital cooperation proposal and is not an official governmental or consular platform unless formally adopted by the competent authorities.",
+    "rights": "All rights reserved",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "cookies": "Cookie Policy",
+    "accessibility": "Accessibility"
+  },
+  "auth": {
+    "loginTitle": "Login",
+    "registerTitle": "Create a New Account",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full Name",
+    "accountType": "Account Type",
+    "submit": "Continue",
+    "demoNotice": "These are demo accounts — passwords must be changed before any real use."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "empty": "No data to display",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "search": "Search"
+  }
+}

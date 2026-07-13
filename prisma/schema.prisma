@@ -1,0 +1,805 @@
+// VietConnect Egy — Prisma Schema
+// PostgreSQL database schema covering identity, RBAC, services, business,
+// investment, directory, documents, communications and content modules.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------------
+// ENUMS
+// ------------------------------------------------------------------
+
+enum RoleKey {
+  SUPER_ADMIN
+  EMBASSY_ADMIN
+  CONSULAR_OFFICER
+  STUDENT_OFFICER
+  BUSINESS_OFFICER
+  CONTENT_EDITOR
+  EMERGENCY_OFFICER
+  ANALYST
+  CITIZEN
+  STUDENT
+  RESEARCHER
+  BUSINESS_OWNER
+  INVESTOR
+  EGYPTIAN_PARTNER
+  SERVICE_PROVIDER
+}
+
+enum AccountType {
+  CITIZEN
+  STUDENT
+  RESEARCHER
+  BUSINESS
+  INVESTOR
+  PARTNER
+  STAFF
+}
+
+enum RequestStatus {
+  NEW
+  UNDER_REVIEW
+  NEEDS_DOCUMENTS
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  REJECTED
+  ESCALATED
+}
+
+enum RequestPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum RequestType {
+  GENERAL_INQUIRY
+  LOST_PASSPORT
+  LOST_DOCUMENTS
+  RESIDENCY_ISSUE
+  STUDENT_CASE
+  DOCUMENT_ATTESTATION
+  LEGAL_ASSISTANCE
+  HEALTH_ISSUE
+  UNIVERSITY_ISSUE
+  BUSINESS_ISSUE
+  TRADE_DISPUTE
+  EMERGENCY
+  COMPLAINT
+  SUGGESTION
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  RESCHEDULED
+  COMPLETED
+  NO_SHOW
+}
+
+enum DocumentConfidentiality {
+  PUBLIC
+  INTERNAL
+  CONFIDENTIAL
+  RESTRICTED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ContentStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+enum EmergencyType {
+  MEDICAL
+  LOST_DOCUMENTS
+  ACCIDENT
+  DETENTION
+  SECURITY
+  VIOLENCE_THREAT
+  MISSING_STUDENT
+  OTHER
+}
+
+enum EmergencyStatus {
+  OPEN
+  ACKNOWLEDGED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+}
+
+// ------------------------------------------------------------------
+// IDENTITY & AUTH
+// ------------------------------------------------------------------
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  emailVerified   DateTime?
+  passwordHash    String
+  fullName        String
+  phone           String?
+  nationality     String    @default("Vietnam")
+  accountType     AccountType
+  membershipNo    String    @unique @default(cuid())
+  avatarUrl       String?
+  city            String?
+  residenceCountry String   @default("Egypt")
+  passportNoMasked String?
+  isActive        Boolean   @default(true)
+  isApproved      Boolean   @default(false)
+  twoFactorEnabled Boolean  @default(false)
+  twoFactorSecret String?
+  lastLoginAt     DateTime?
+  deletedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  roles           UserRole[]
+  accounts        Account[]
+  sessions        Session[]
+  studentProfile  StudentProfile?
+  citizenProfile  CitizenProfile?
+  businessProfile BusinessProfile?
+  investorProfile InvestorProfile?
+  serviceRequests ServiceRequest[]  @relation("RequestOwner")
+  assignedRequests ServiceRequest[] @relation("RequestAssignee")
+  appointments    Appointment[]
+  documents       Document[]
+  notifications   NotificationRecipient[]
+  messages        Message[]
+  threadsCreated  MessageThread[]   @relation("ThreadCreator")
+  complaints      Complaint[]
+  emergencyCases  EmergencyCase[]
+  auditLogs       AuditLog[]
+  activityLogs    ActivityLog[]
+
+  @@index([accountType])
+  @@index([city])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  ipAddress    String?
+  userAgent    String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Role {
+  id          String     @id @default(cuid())
+  key         RoleKey    @unique
+  nameAr      String
+  nameEn      String
+  nameVi      String
+  description String?
+  permissions RolePermission[]
+  users       UserRole[]
+}
+
+model Permission {
+  id          String @id @default(cuid())
+  code        String @unique // e.g. "requests:read", "users:manage"
+  description String?
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+// ------------------------------------------------------------------
+// PROFILES
+// ------------------------------------------------------------------
+
+model StudentProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  universityId      String?
+  faculty           String?
+  studyLevel        String?
+  startDate         DateTime?
+  expectedGraduation DateTime?
+  residencyExpiry   DateTime?
+  housingAddress     String?
+  insuranceProvider  String?
+  emergencyContactName String?
+  emergencyContactPhone String?
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university University? @relation(fields: [universityId], references: [id])
+}
+
+model CitizenProfile {
+  id       String @id @default(cuid())
+  userId   String @unique
+  occupation String?
+  address  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BusinessProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  companyId      String?  @unique
+  position       String?
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id])
+}
+
+model InvestorProfile {
+  id            String @id @default(cuid())
+  userId        String @unique
+  focusSectors  String?
+  ticketSizeMin Int?
+  ticketSizeMax Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ------------------------------------------------------------------
+// EDUCATION / BUSINESS ENTITIES
+// ------------------------------------------------------------------
+
+model University {
+  id          String   @id @default(cuid())
+  nameAr      String
+  nameEn      String
+  nameVi      String
+  city        String
+  website     String?
+  description String?
+  logoUrl     String?
+  isPartner   Boolean  @default(false)
+
+  students StudentProfile[]
+}
+
+model Company {
+  id                 String   @id @default(cuid())
+  nameAr             String
+  nameEn             String
+  nameVi             String
+  sector             String
+  country            String
+  city               String?
+  commercialRegNo    String?
+  website             String?
+  logoUrl            String?
+  description        String?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  createdAt          DateTime @default(now())
+
+  profiles     BusinessProfile[]
+  opportunities BusinessOpportunity[]
+  products     Product[]
+}
+
+model BusinessOpportunity {
+  id          String   @id @default(cuid())
+  companyId   String
+  titleAr     String
+  titleEn     String
+  titleVi     String
+  sector      String
+  type        String   // import / export / partnership / distributor / supplier / agent
+  country     String
+  city        String?
+  description String
+  attachments String[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id])
+}
+
+model InvestmentOpportunity {
+  id             String   @id @default(cuid())
+  titleAr        String
+  titleEn        String
+  titleVi        String
+  sector         String
+  country        String
+  city           String?
+  stage          String
+  investmentMin  Int?
+  investmentMax  Int?
+  riskNote       String?
+  description    String
+  contactEmail   String?
+  attachments    String[]
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+}
+
+model Product {
+  id          String  @id @default(cuid())
+  companyId   String
+  nameAr      String
+  nameEn      String
+  nameVi      String
+  sector      String
+  description String?
+  imageUrl    String?
+
+  company Company @relation(fields: [companyId], references: [id])
+}
+
+model Service {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  nameAr      String
+  nameEn      String
+  nameVi      String
+  category    String
+  descriptionAr String?
+  descriptionEn String?
+  descriptionVi String?
+  isActive    Boolean @default(true)
+}
+
+// ------------------------------------------------------------------
+// SERVICE REQUESTS / APPOINTMENTS
+// ------------------------------------------------------------------
+
+model ServiceRequest {
+  id            String          @id @default(cuid())
+  refNumber     String          @unique @default(cuid())
+  userId        String
+  type          RequestType
+  priority      RequestPriority @default(NORMAL)
+  status        RequestStatus   @default(NEW)
+  subject       String
+  description   String
+  assigneeId    String?
+  slaDueAt      DateTime?
+  ratingScore   Int?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  user     User @relation("RequestOwner", fields: [userId], references: [id])
+  assignee User? @relation("RequestAssignee", fields: [assigneeId], references: [id])
+
+  comments    RequestComment[]
+  attachments RequestAttachment[]
+
+  @@index([status])
+  @@index([type])
+}
+
+model RequestComment {
+  id        String   @id @default(cuid())
+  requestId String
+  authorId  String
+  body      String
+  isInternal Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  request ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+model RequestAttachment {
+  id        String   @id @default(cuid())
+  requestId String
+  fileUrl   String
+  fileName  String
+  mimeType  String
+  sizeBytes Int
+  createdAt DateTime @default(now())
+
+  request ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+model AppointmentSlot {
+  id          String   @id @default(cuid())
+  serviceId   String?
+  date        DateTime
+  startTime   String
+  endTime     String
+  capacity    Int      @default(1)
+  bookedCount Int      @default(0)
+
+  appointments Appointment[]
+}
+
+model Appointment {
+  id           String            @id @default(cuid())
+  bookingNo    String            @unique @default(cuid())
+  userId       String
+  slotId       String
+  serviceName  String
+  status       AppointmentStatus @default(PENDING)
+  notes        String?
+  createdAt    DateTime          @default(now())
+
+  user User            @relation(fields: [userId], references: [id])
+  slot AppointmentSlot @relation(fields: [slotId], references: [id])
+}
+
+// ------------------------------------------------------------------
+// EMERGENCY
+// ------------------------------------------------------------------
+
+model EmergencyCase {
+  id          String          @id @default(cuid())
+  refNumber   String          @unique @default(cuid())
+  userId      String
+  type        EmergencyType
+  status      EmergencyStatus @default(OPEN)
+  description String
+  latitude    Float?
+  longitude   Float?
+  locationConsent Boolean     @default(false)
+  createdAt   DateTime        @default(now())
+  resolvedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ------------------------------------------------------------------
+// DOCUMENTS
+// ------------------------------------------------------------------
+
+model DocumentType {
+  id     String @id @default(cuid())
+  code   String @unique
+  nameAr String
+  nameEn String
+  nameVi String
+
+  documents Document[]
+}
+
+model Document {
+  id             String                   @id @default(cuid())
+  userId         String
+  typeId         String
+  fileUrl        String
+  fileName       String
+  confidentiality DocumentConfidentiality @default(INTERNAL)
+  verificationStatus VerificationStatus   @default(PENDING)
+  reviewedById   String?
+  expiresAt      DateTime?
+  createdAt      DateTime                 @default(now())
+
+  user User         @relation(fields: [userId], references: [id])
+  type DocumentType @relation(fields: [typeId], references: [id])
+}
+
+// ------------------------------------------------------------------
+// NOTIFICATIONS & MESSAGING
+// ------------------------------------------------------------------
+
+model Notification {
+  id        String              @id @default(cuid())
+  titleAr   String
+  titleEn   String
+  titleVi   String
+  bodyAr    String
+  bodyEn    String
+  bodyVi    String
+  channel   NotificationChannel @default(IN_APP)
+  audienceRole RoleKey?
+  scheduledAt DateTime?
+  createdAt DateTime            @default(now())
+
+  recipients NotificationRecipient[]
+}
+
+model NotificationRecipient {
+  id             String   @id @default(cuid())
+  notificationId String
+  userId         String
+  isRead         Boolean  @default(false)
+  readAt         DateTime?
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MessageThread {
+  id         String   @id @default(cuid())
+  subject    String
+  creatorId  String
+  requestId  String?
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  creator  User      @relation("ThreadCreator", fields: [creatorId], references: [id])
+  messages Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  threadId  String
+  senderId  String
+  body      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  thread MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender User          @relation(fields: [senderId], references: [id])
+}
+
+// ------------------------------------------------------------------
+// CONTENT (CMS)
+// ------------------------------------------------------------------
+
+model NewsArticle {
+  id         String        @id @default(cuid())
+  slug       String        @unique
+  titleAr    String
+  titleEn    String
+  titleVi    String
+  bodyAr     String
+  bodyEn     String
+  bodyVi     String
+  coverImage String?
+  status     ContentStatus @default(DRAFT)
+  isFeatured Boolean       @default(false)
+  publishedAt DateTime?
+  createdAt  DateTime      @default(now())
+}
+
+model Event {
+  id          String        @id @default(cuid())
+  titleAr     String
+  titleEn     String
+  titleVi     String
+  descriptionAr String?
+  descriptionEn String?
+  descriptionVi String?
+  location    String?
+  startAt     DateTime
+  endAt       DateTime?
+  status      ContentStatus @default(DRAFT)
+  coverImage  String?
+}
+
+model Scholarship {
+  id          String   @id @default(cuid())
+  titleAr     String
+  titleEn     String
+  titleVi     String
+  provider    String
+  deadline    DateTime?
+  descriptionAr String?
+  descriptionEn String?
+  descriptionVi String?
+  isActive    Boolean  @default(true)
+}
+
+model Internship {
+  id          String   @id @default(cuid())
+  titleAr     String
+  titleEn     String
+  titleVi     String
+  organization String
+  city        String?
+  descriptionAr String?
+  descriptionEn String?
+  descriptionVi String?
+  isActive    Boolean  @default(true)
+}
+
+model JobOpportunity {
+  id          String   @id @default(cuid())
+  titleAr     String
+  titleEn     String
+  titleVi     String
+  company     String
+  city        String?
+  descriptionAr String?
+  descriptionEn String?
+  descriptionVi String?
+  isActive    Boolean  @default(true)
+}
+
+// ------------------------------------------------------------------
+// DIRECTORY & PARTNERS
+// ------------------------------------------------------------------
+
+model DirectoryPlace {
+  id          String   @id @default(cuid())
+  nameAr      String
+  nameEn      String
+  nameVi      String
+  category    String   // university, hospital, pharmacy, police, hotel, restaurant, translator, lawyer, shipping, port, airport, bank, telecom, accommodation, attraction
+  descriptionAr String?
+  descriptionEn String?
+  descriptionVi String?
+  address     String?
+  phone       String?
+  email       String?
+  website     String?
+  latitude    Float?
+  longitude   Float?
+  hoursOfOperation String?
+  languagesSupported String[]
+  photos      String[]
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  ratingAvg   Float    @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([category])
+}
+
+model Partner {
+  id       String @id @default(cuid())
+  nameAr   String
+  nameEn   String
+  nameVi   String
+  type     String // university, hospital, company, port, association, research
+  logoUrl  String?
+  website  String?
+  isActive Boolean @default(true)
+}
+
+// ------------------------------------------------------------------
+// COMPLAINTS, TRANSLATION, FAQ, SETTINGS, LOGS
+// ------------------------------------------------------------------
+
+model Complaint {
+  id          String   @id @default(cuid())
+  refNumber   String   @unique @default(cuid())
+  userId      String?
+  isAnonymous Boolean  @default(false)
+  category    String
+  priority    RequestPriority @default(NORMAL)
+  subject     String
+  description String
+  attachments String[]
+  responseBody String?
+  ratingScore Int?
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model Translation {
+  id        String   @id @default(cuid())
+  sourceText String  @db.Text
+  sourceLang String
+  targetLang String
+  translatedText String @db.Text
+  createdAt DateTime @default(now())
+}
+
+model FAQ {
+  id          String @id @default(cuid())
+  category    String
+  questionAr  String
+  questionEn  String
+  questionVi  String
+  answerAr    String
+  answerEn    String
+  answerVi    String
+  isPublished Boolean @default(true)
+}
+
+model SystemSetting {
+  key   String @id
+  value String @db.Text
+}
+
+model Language {
+  code      String @id // ar, en, vi
+  nameNative String
+  isRtl     Boolean @default(false)
+  isActive  Boolean @default(true)
+}
+
+model MediaFile {
+  id        String   @id @default(cuid())
+  url       String
+  fileName  String
+  mimeType  String
+  sizeBytes Int
+  createdAt DateTime @default(now())
+}
+
+model ReportExport {
+  id        String   @id @default(cuid())
+  type      String
+  format    String   // pdf, csv, xlsx
+  fileUrl   String
+  requestedById String
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
